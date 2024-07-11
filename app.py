@@ -19,30 +19,34 @@ class MemberSchema(ma.Schema):
 member_schema = MemberSchema
 members_schema = MemberSchema(many= True)
 
-# Reads all customer data via a GET request
-# @app.route("/members", methods = ['GET'])
-# def get_members():
-#     conn = connect_db()
-#     if conn is not None:
-#         try:
-#             cursor = conn.cursor(dictionary= True) # returns us a dictionary of table data instead of a tuple, our schema meta class with cross check the contents of the dictionaries that are returned
+@app.route('/') # default landing page
+def home():
+    return "Hello, Flask!"
 
-#             # Write our query to GET all users
-#             query = "SELECT * FROM member;"
+Reads all customer data via a GET request
+@app.route("/members/<int:id>", methods = ['GET'])
+def get_members(id):
+    conn = connect_db()
+    if conn is not None:
+        try:
+            cursor = conn.cursor(dictionary= True) # returns us a dictionary of table data instead of a tuple, our schema meta class with cross check the contents of the dictionaries that are returned
 
-#             cursor.execute(query)
+            # Write our query to GET all users
+            query = "SELECT * FROM member;"
 
-#             members = cursor.fetchall()
+            cursor.execute(query, (id,))
 
-#         finally:
-#             if conn and conn.is_connected():
-#                 cursor.close()
-#                 conn.close()
-#                 return members_schema.jsonify(members)
+            members = cursor.fetchall()
+
+        finally:
+            if conn and conn.is_connected():
+                cursor.close()
+                conn.close()
+                return members_schema.jsonify(members)
             
 
 # Create a new customer with a POST request
-@app.route("/member", methods= ["POST"])
+@app.route("/members", methods= ["POST"])
 def add_member():
     try:
         member_data = member_schema.load(request.json)
@@ -52,19 +56,19 @@ def add_member():
     conn = connect_db()
     if conn is not None:
         try:
-            cursor = conn.cursor()
-
-            # New member data
-            new_member = (member_data["member_name"], member_data["email"], member_data["phone"])
-
-            # query
-            query = "INSERT INTO member (member_name, email, phone) VALUES (%s, %s, %s)"
-
-            # Execute the query with new_customer data
-            cursor.execute(query, new_member)
-            conn.commit()
-
-            return jsonify({'message': 'New member added successfully!'}), 200
+           cursor = conn.cursor()
+           
+           # New member data
+           new_member = (member_data["member_name"], member_data["email"], member_data["phone"])
+           
+           # query
+           query = "INSERT INTO member (member_name, email, phone) VALUES (%s, %s, %s)"
+           
+           # Execute the query with new_customer data
+           cursor.execute(query, new_member, (id,))
+           conn.commit()
+           
+           return jsonify({'message': 'New member added successfully!'}), 200
         
         except Error as e:
             return jsonify(e.messages), 500
